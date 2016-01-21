@@ -1,0 +1,49 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: open-vpn-deployment
+  namespace: default
+spec:
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        name: openvpn
+    spec:
+      containers:
+      - name: "openvpn"
+        image: 'cemo/docker-openvpn'
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+        env:
+        - name: KUBERNETES
+          value: "true"
+        ports:
+        - name: vpn
+          containerPort: 1194
+          hostPort: 1194
+          protocol: UDP
+        volumeMounts:
+        - mountPath: /etc/openvpn
+          name: open-vpn
+      volumes:
+      - name: open-vpn
+        secret:
+          secretName: open-vpn
+          items:
+          - key: ca.crt
+            path: pki/ca.crt
+          - key: dh.pem
+            path: pki/dh.pem
+          - key: ta.key
+            path: pki/ta.key
+          - key: vpn.xxx.com.crt
+            path: pki/issued/vpn.xxx.com.crt
+          - key: vpn.xxx.com.key
+            path: pki/private/vpn.xxx.com.key
+          - key: ovpn-env.sh
+            path: ovpn_env.sh
+          - key: openvpn.conf
+            path: openvpn.conf
